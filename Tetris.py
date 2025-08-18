@@ -21,6 +21,9 @@ class FigureStorage:
     def get_figure(self, idx=-1):
         return self.__figure[idx]
 
+    def get_all(self):
+        return self.__figure
+
 class Figure:
     def __init__(self, x, y):
         self.__x = int(x)
@@ -95,10 +98,12 @@ class Figure:
             self.__y += 1
 
     def instant_falling(self, playing_field):
-        for i in range(playing_field.get_field_h):
+        for i in range(playing_field.get_field_h()):
             if not self.check_pos(playing_field, next_y=i):
                 break
-            self.__y += i - 1
+            y = i
+        self.__y += y
+        print(self.__y)
 
     def free_fall(self, playing_field, fall_speed):
         if time.time() - self.__last_fall > fall_speed:  # свободное падение фигуры
@@ -109,8 +114,10 @@ class Figure:
                 self.__y += 1
                 self.__last_fall = time.time()
                 return True
+        return True
 
     def check_pos(self, playing_field, next_x=0, next_y=0):
+
         for block_x in range(len(self.__figure_type)):
             for block_y in range(len(self.__figure_type[block_x])):
                 if self.__figure_type[block_x][block_y] == 'x':
@@ -130,8 +137,8 @@ class PlayingField:
     __cell = 20
 
     def __init__(self, screen_x, screen_y):
-        self.initial_cord_x = (screen_x - self.__cell * self.__field_w) / 2
-        self.initial_cord_y = (screen_y - self.__cell * self.__field_h) / 2
+        self.initial_cord_x = int((screen_x - self.__cell * self.__field_w) / 2)
+        self.initial_cord_y = int((screen_y - self.__cell * self.__field_h) / 2)
         for x in range(self.__field_w):
             self.__playing_field.append([])
             for y in range(self.__field_h):
@@ -146,6 +153,19 @@ class PlayingField:
                 if fig[block_x][block_y] == 'x':
                     self.__playing_field[x + block_x][y + block_y] = figure
 
+    def update_playing_field(self, storage):
+        for x in range(self.__field_w):
+            for y in range(self.__field_h):
+                self.__playing_field[x][y] = "X"
+        for figure in storage:
+            fig = figure.get_figure()
+            x = figure.get_x()
+            y = figure.get_y()
+            for block_x in range(len(fig)):
+                for block_y in range(len(fig[block_x])):
+                    if fig[block_x][block_y] == 'x':
+                        self.__playing_field[x + block_x][y + block_y] = figure
+
     def get_playing_field(self, x, y):
         return self.__playing_field[x][y]
 
@@ -157,20 +177,33 @@ class PlayingField:
 
     def drawing_playing_field(self, screen):
         pg.draw.rect(screen, "grey",
-                         ( self.initial_cord_x,  self.initial_cord_y,  self.__cell * self.__field_w, self.__cell * self.__field_h))
+                    (self.initial_cord_x,  self.initial_cord_y,  self.__cell * self.__field_w,
+                     self.__cell * self.__field_h))
 
         for x in range(len(self.__playing_field)):
             for y in range(len(self.__playing_field[x])):
                 pg.draw.rect(screen, "black",
-                             (self.initial_cord_x + self.__cell * x,  self.initial_cord_y + self.__cell * y, self.__cell, self.__cell), 1)
+                             (self.initial_cord_x + self.__cell * x,  self.initial_cord_y + self.__cell * y,
+                              self.__cell, self.__cell), 1)
                 if self.__playing_field[x][y] != "X":
-                    self.draw_block(screen, self.initial_cord_x + self.__cell * x,  self.initial_cord_y + self.__cell * y, self.__playing_field[self.initial_cord_x + self.__cell * x][self.initial_cord_y + self.__cell * y].get_color())
+                    self.draw_block(screen, self.initial_cord_x + self.__cell * x,
+                                    self.initial_cord_y + self.__cell * y, self.__playing_field[x][y].get_color())
+
+    def drawing_falling_figure(self, screen, falling_figure):
+        fig = falling_figure.get_figure()
+        x = falling_figure.get_x()
+        y = falling_figure.get_y()
+        color = falling_figure.get_color()
+        for block_x in range(len(fig)):
+            for block_y in range(len(fig[block_x])):
+                if fig[block_x][block_y] == 'x':
+                    self.draw_block(screen, self.initial_cord_x + self.__cell * (x + block_x),
+                                    self.initial_cord_y + self.__cell * (y + block_y), color)
 
     def draw_block(self, screen, cord_x, cord_y, color):
-
-        pg.draw.rect(screen, color[0], (cord_x + 1, cord_y + 1, self.__cell - 1, self.__cell - 1), 0, 3)
-        pg.draw.rect(screen, color[1], (cord_x + 1, cord_y + 1, self.__cell - 4, self.__cell - 4), 0, 3)
-        pg.draw.circle(screen, color[0], (cord_x + self.__cell / 2, cord_y + self.__cell / 2), 5)
+        pg.draw.rect(screen, color.value[0], (cord_x + 1, cord_y + 1, self.__cell - 1, self.__cell - 1), 0, 3)
+        pg.draw.rect(screen, color.value[1], (cord_x + 1, cord_y + 1, self.__cell - 4, self.__cell - 4), 0, 3)
+        pg.draw.circle(screen, color.value[0], (cord_x + self.__cell / 2, cord_y + self.__cell / 2), 5)
 
 
 class TetrisGame:
@@ -189,15 +222,16 @@ class TetrisGame:
 
         running = True
         self.__fps_clock.tick(self.__fps)
-        next_figure = Figure(self.pf.get_field_w() / 2, 0)
-        falling_figure = Figure(self.pf.get_field_w() / 2, 0)
+        next_figure = Figure(self.pf.get_field_w() / 2 - 1, 0)
+        falling_figure = Figure(self.pf.get_field_w() / 2 - 1, 0)
         self.storage.app_figure(falling_figure)
         while running:
+            pg.display.flip()
             self.pf.drawing_playing_field(self.__screen)
             if falling_figure is None:
                 falling_figure = next_figure
                 self.storage.app_figure(falling_figure)
-                next_figure = Figure(self.pf.get_field_w() / 2, 0)
+                next_figure = Figure(self.pf.get_field_w() / 2 - 1, 0)
 
             for event in pg.event.get():
                 if event.type == pg.QUIT:
@@ -220,13 +254,13 @@ class TetrisGame:
                         falling_figure.fast_falling(self.pf)
 
                     # мгновенный сброс вниз
-                    elif event.key == pg.K_RETURN:
+                    elif event.key == pg.K_SPACE:
                         falling_figure.instant_falling(self.pf)
 
+            self.pf.drawing_falling_figure(self.__screen, falling_figure)
             if not falling_figure.free_fall(self.pf, self.fall_speed):
                 falling_figure = None
 
-            pg.display.flip()
         pg.quit()
 
 if __name__ == '__main__':
