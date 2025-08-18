@@ -103,7 +103,6 @@ class Figure:
                 break
             y = i
         self.__y += y
-        print(self.__y)
 
     def free_fall(self, playing_field, fall_speed):
         if time.time() - self.__last_fall > fall_speed:  # свободное падение фигуры
