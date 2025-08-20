@@ -15,14 +15,21 @@ class FigureStorage:
     def __init__(self):
         self.__figure = []
 
-    def app_figure(self, state):
+    def add_figure(self, state):
         self.__figure.append(state)
 
-    def get_figure(self, idx=-1):
+    def del_figure(self, figure):
+        self.__figure.pop(self.__figure.index(figure))
+
+    def get_figure_st(self, idx=-1):
         return self.__figure[idx]
+
+    def get_fallen_pieces(self):
+        return self.__figure[0:-1]
 
     def get_all(self):
         return self.__figure
+
 
 class Figure:
     def __init__(self, x, y):
@@ -31,6 +38,7 @@ class Figure:
         self.__color = random.choice([*Color])
         self.__figure_type = self.random_figure()
         self.__last_fall = time.time()
+
     @staticmethod
     def random_figure():
         figures_cord = [
@@ -75,6 +83,15 @@ class Figure:
     def get_y(self):
         return self.__y
 
+    def set_figure(self, figure):
+        self.__figure_type = figure
+
+    def set_x(self, x):
+        self.__x = x
+
+    def set_y(self, y):
+        self.__y = y
+
     def get_color(self):
         return self.__color
 
@@ -86,11 +103,10 @@ class Figure:
         if self.check_pos(playing_field, next_x=1):
             self.__x += 1
 
-    def rotate(self, playing_field, k=3):
-        a = array(self.__figure_type)
-        self.__figure_type = rot90(a, k).tolist()
-        if not self.check_pos(playing_field):
-            self.__figure_type = rot90(a, -k).tolist()
+    def rotate(self, playing_field, k=1):
+        rotated_figure = rot90(array(self.__figure_type), k)
+        if self.check_rotate(playing_field, rotated_figure):
+            self.__figure_type = rotated_figure.tolist()
 
     def fast_falling(self, playing_field):
         going_down = True
@@ -98,6 +114,7 @@ class Figure:
             self.__y += 1
 
     def instant_falling(self, playing_field):
+        y = 0
         for i in range(playing_field.get_field_h()):
             if not self.check_pos(playing_field, next_y=i):
                 break
@@ -107,7 +124,7 @@ class Figure:
     def free_fall(self, playing_field, fall_speed):
         if time.time() - self.__last_fall > fall_speed:  # свободное падение фигуры
             if not self.check_pos(playing_field, next_y=1):  # проверка "приземления" фигуры
-                playing_field.app_playing_field(self)
+                playing_field.add_playing_field(self)
                 return False
             else:  # фигура пока не приземлилась, продолжаем движение вниз
                 self.__y += 1
@@ -128,6 +145,19 @@ class Figure:
                         return False
         return True
 
+    def check_rotate(self, playing_field, rotated_figure):
+
+        for block_x in range(len(rotated_figure)):
+            for block_y in range(len(rotated_figure[block_x])):
+                if rotated_figure[block_x][block_y] == 'x':
+                    if self.__x + block_x >= playing_field.get_field_w() or self.__x + block_x < 0:
+                        return False
+                    elif self.__y + block_y >= playing_field.get_field_h() or self.__y + block_y < 0:
+                        return False
+                    if playing_field.get_playing_field(self.__x + block_x, self.__y + block_y) != "X":
+                        return False
+        return True
+
 
 class PlayingField:
     __playing_field = []
@@ -143,7 +173,7 @@ class PlayingField:
             for y in range(self.__field_h):
                 self.__playing_field[x].append("X")
 
-    def app_playing_field(self, figure):
+    def add_playing_field(self, figure):
         fig = figure.get_figure()
         x = figure.get_x()
         y = figure.get_y()
@@ -164,6 +194,42 @@ class PlayingField:
                 for block_y in range(len(fig[block_x])):
                     if fig[block_x][block_y] == 'x':
                         self.__playing_field[x + block_x][y + block_y] = figure
+
+    def check_line_filled(self, y):
+        for x in range(self.__field_w):
+            if self.__playing_field[x][y] == 'X':
+                return False
+        return True
+
+    def find_filled_rows(self):
+        removed_lines = 0
+        y = self.__field_h - 1
+        while y >= 0:
+            if self.check_line_filled(y):
+                for pushDownY in range(y, 0, -1):
+                    for x in range(self.__field_w):
+                        if x - 1 >= 0 and self.__playing_field[x][pushDownY] == self.__playing_field[x - 1][pushDownY]:
+                            continue
+                        figure = self.__playing_field[x][pushDownY]
+                        if figure == "X":
+                            y -= 1
+                            break
+                        fig = figure.get_figure()
+                        fig_y = figure.get_y()
+                        for fig_x in range(len(fig)):
+                            if len([fig_x]) > 1:
+                                del fig[fig_x][pushDownY - fig_y]
+                                figure.set_figure(fig)
+                                figure.set_y(fig_y + 1)
+                            else:
+                                del fig[fig_x][pushDownY - fig_y]
+                                figure.set_figure(fig)
+                for x in range(self.__field_w):
+                    self.__playing_field[x][0] = "X"
+                removed_lines += 1
+            else:
+                y -= 1
+        return removed_lines
 
     def get_playing_field(self, x, y):
         return self.__playing_field[x][y]
@@ -223,15 +289,18 @@ class TetrisGame:
         self.__fps_clock.tick(self.__fps)
         next_figure = Figure(self.pf.get_field_w() / 2 - 1, 0)
         falling_figure = Figure(self.pf.get_field_w() / 2 - 1, 0)
-        self.storage.app_figure(falling_figure)
+        self.storage.add_figure(falling_figure)
+
         while running:
             pg.display.flip()
-            self.pf.drawing_playing_field(self.__screen)
+
             if falling_figure is None:
                 falling_figure = next_figure
-                self.storage.app_figure(falling_figure)
+                self.storage.add_figure(falling_figure)
+                self.pf.find_filled_rows()
+                self.pf.update_playing_field(self.storage.get_fallen_pieces())
                 next_figure = Figure(self.pf.get_field_w() / 2 - 1, 0)
-
+            self.pf.drawing_playing_field(self.__screen)
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     running = False
@@ -259,7 +328,6 @@ class TetrisGame:
             self.pf.drawing_falling_figure(self.__screen, falling_figure)
             if not falling_figure.free_fall(self.pf, self.fall_speed):
                 falling_figure = None
-
         pg.quit()
 
 if __name__ == '__main__':
