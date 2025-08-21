@@ -26,29 +26,29 @@ class Figure:
              [1, 1, 1, 1],
              [0, 0, 0, 0],
              [0, 0, 0, 0]],
-            # # L-образная
-            # [['o', 'x', 'o'],
-            #  ['o', 'x', 'o'],
-            #  ['o', 'x', 'x']],
-            # # обратная L-образная
-            # [['o', 'x', 'o'],
-            #  ['o', 'x', 'o'],
-            #  ['x', 'x', 'o']],
-            # # квадрат
-            # [['x', 'x'],
-            #  ['x', 'x']],
-            # # Z-образная
-            # [['x', 'x', 'o'],
-            #  ['o', 'x', 'x'],
-            #  ['o', 'o', 'o']],
+            # L-образная
+            [[0, 1, 0],
+             [0, 1, 0],
+             [0, 1, 1]],
+            # обратная L-образная
+            [[0, 1, 0],
+             [0, 1, 0],
+             [1, 1, 0]],
+            # квадрат
+            [[1, 1, 0],
+             [1, 1, 0]],
+            # Z-образная
+            [[1, 1, 0],
+             [0, 1, 0],
+             [0, 1, 1]],
             # # обратная Z-образная
-            # [['o', 'x', 'x'],
-            #  ['x', 'x', 'o'],
-            #  ['o', 'o', 'o']],
-            # # T-образная
-            # [['o', 'x', 'o'],
-            #  ['x', 'x', 'x'],
-            #  ['o', 'o', 'o']]
+            [[0, 1, 1],
+             [0, 1, 0],
+             [1, 1, 0]],
+            # T-образная
+            [[0, 1, 0],
+             [1, 1, 1],
+             [0, 0, 0]],
         ]
         figure = random.choice(figures_cord)
         rotated_figure = flip(rot90(figure, 1), 0)
@@ -77,13 +77,21 @@ class Figure:
         if self.collision_prob(collision_func, next_y=1):
             self.y += 1
 
-    def instant_falling(self, playing_field):
-        y = 0
-        for i in range(playing_field.field_h):
-            if not self.collision_prob(playing_field, next_y=i):
+    def instant_falling(self, collision_func: Callable):
+        # y = 0
+        print("===")
+        while 1:
+            if not self.fast_falling(collision_func):
                 break
-            y = i
-        self.__y += y
+        print("===")
+        # for i in range(playing_field.field_h):
+        #     if not self.collision_prob(playing_field, next_y=i):
+        #         break
+        #     y = i
+        # self.__y += y
+        
+    def remove_chip(self, x, y):
+        self.__figure_type[x][y] = 0
 
     def free_fall(self, collision_func: Callable, fall_speed=0.5):
         if time.time() - self.__last_fall > fall_speed:  # свободное падение фигуры

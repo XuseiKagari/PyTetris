@@ -25,7 +25,7 @@ class FigureStorage:
     def __iter__(self) -> Iterator[Figure]:
         return iter(self.__figures)
 
-    def fallen_figures(self):
+    def fallen_figures(self) -> Iterator[Figure]:
         return self.__figures[0:-1]
 
     def add_figure(self, state):

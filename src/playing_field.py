@@ -65,7 +65,7 @@ class PlayingField:
         pg.draw.rect(self.__screen, color.value[1], (cord_x + 1, cord_y + 1, self.__cell - 4, self.__cell - 4), 0, 3)
         pg.draw.circle(self.__screen, color.value[0], (cord_x + self.__cell / 2, cord_y + self.__cell / 2), 5)
 
-    def is_collided_func(self, x, y) -> bool:
+    def __is_collided_func(self, x, y) -> bool:
         if x < 0 or x >= self.field_w:
             return True
         if y < 0 or y >= self.field_h:
@@ -78,6 +78,45 @@ class PlayingField:
                         if figure.x + _x == x and figure.y + _y == y:
                             return True
         return False
+    
+    def __is_wrapped_func_excluded(self, exclude):
+        def __is_collided_func(x, y) -> bool:
+            if x < 0 or x >= self.field_w:
+                return True
+            if y < 0 or y >= self.field_h:
+                return True
+            for idx, figure in enumerate(self.__storage.fallen_figures()):
+                if exclude == idx:
+                    continue
+                fig = figure.get_figure()
+                for _x in range(len(fig)):
+                    for _y in range(len(fig[_x])):
+                        if fig[_x][_y]:
+                            if figure.x + _x == x and figure.y + _y == y:
+                                return True
+            return False
+        return __is_collided_func
+    
+    def __remove_filled(self):
+        buffer_state = {}
+        for fig_idx, figure in enumerate(self.__storage.fallen_figures()):
+            fig = figure.get_figure()
+            for _x in range(len(fig)):
+                for _y in range(len(fig[_x])):
+                    if fig[_x][_y]:
+                        actual_y = figure.y + _y
+                        idx = actual_y
+                        if buffer_state.get(idx, None) is None:
+                            buffer_state[idx] = []
+                        buffer_state[idx].append((fig_idx, _x, _y))
+        for _, items in buffer_state.items():
+            if len(items) == self.field_w:
+                for item in items:
+                    fig_idx, chip_x, chip_y = item
+                    self.__storage.fallen_figures()[fig_idx].remove_chip(chip_x, chip_y)
+        for idx, figure in enumerate(self.__storage.fallen_figures()):
+            figure.instant_falling(self.__is_wrapped_func_excluded(idx))
+            
 
     def tick(self):
         self.__draw_playing_field()
@@ -90,27 +129,28 @@ class PlayingField:
             self.__next_figure = Figure(self.__fall_from_x, self.__fall_from_y)
             falling_figure = self.__storage.get_falling()
 
-        if not falling_figure.free_fall(self.is_collided_func):
+        if not falling_figure.free_fall(self.__is_collided_func):
             self.__storage.preempt_falling(self.__next_figure)
             self.__next_figure = Figure(self.__fall_from_x, self.__fall_from_y)
             falling_figure = self.__storage.get_falling()
-            if not falling_figure.free_fall(self.is_collided_func):
+            if not falling_figure.free_fall(self.__is_collided_func):
                 self.game_over = True
                 return
+        self.__remove_filled()
 
         while not self.__event_bus.empty():
             evt = self.__event_bus.get()
             if evt == PFEvents.MOVE_ACTIVE_FALL:
-                falling_figure.fast_falling(self.is_collided_func)
+                falling_figure.fast_falling(self.__is_collided_func)
                 self.__storage.set_falling(falling_figure)
             if evt == PFEvents.MOVE_ACTIVE_LEFT:
-                falling_figure.left_move(self.is_collided_func)
+                falling_figure.left_move(self.__is_collided_func)
                 self.__storage.set_falling(falling_figure)
             if evt == PFEvents.MOVE_ACTIVE_RIGHT:
-                falling_figure.right_move(self.is_collided_func)
+                falling_figure.right_move(self.__is_collided_func)
                 self.__storage.set_falling(falling_figure)
             if evt == PFEvents.MOVE_ACTIVE_ROTATE:
-                falling_figure.rotate(self.is_collided_func)
+                falling_figure.rotate(self.__is_collided_func)
                 self.__storage.set_falling(falling_figure)
         self.__draw_figures()
 
