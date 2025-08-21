@@ -78,17 +78,9 @@ class Figure:
             self.y += 1
 
     def instant_falling(self, collision_func: Callable):
-        # y = 0
-        print("===")
         while 1:
             if not self.fast_falling(collision_func):
                 break
-        print("===")
-        # for i in range(playing_field.field_h):
-        #     if not self.collision_prob(playing_field, next_y=i):
-        #         break
-        #     y = i
-        # self.__y += y
         
     def remove_chip(self, x, y):
         self.__figure_type[x][y] = 0
