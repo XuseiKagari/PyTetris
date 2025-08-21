@@ -1,3 +1,4 @@
+from time import sleep
 import pygame as pg
 from playing_field import PlayingField
 
@@ -20,16 +21,19 @@ class TetrisGame:
         self.__pf = PlayingField(self.__screen)
 
     def play(self):
-
         while 1:
             pg.display.flip()
+            if self.__pf.game_over:
+                return
             for event in pg.event.get():
                 if event.type == pg.QUIT:
-                    break
+                    return
                 self.__pf.handle_pg_event(event)
             self.__pf.tick()
-        pg.quit()
+            sleep(0.1)
+            
 
 if __name__ == '__main__':
     game = TetrisGame()
     game.play()
+    pg.quit()
