@@ -40,8 +40,3 @@ class FigureStorage:
 
     def get_all(self):
         return self.__figures
-
-
-
-
-

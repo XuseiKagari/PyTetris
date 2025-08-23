@@ -61,11 +61,11 @@ class Figure:
     def set_figure(self, figure):
         self.__figure_type = figure
 
-    def left_move(self, collision_func: Callable):
+    def left_move(self, collision_func: Callable[[int, int], bool]):
         if self.collision_prob(collision_func, next_x=-1):
             self.x -= 1
 
-    def right_move(self, collision_func: Callable):
+    def right_move(self, collision_func: Callable[[int, int], bool]):
         if self.collision_prob(collision_func, next_x=1):
             self.x += 1
 
@@ -74,17 +74,18 @@ class Figure:
         if self.collision_prob_rotate(collision_func, rotated_figure):
             self.__figure_type = rotated_figure.tolist()
 
-    def fast_falling(self, collision_func: Callable):
-        going_down = True
+    def fast_falling(self, collision_func: Callable[[int, int], bool]):
         if self.collision_prob(collision_func, next_y=1):
             self.y += 1
 
-    def instant_falling(self, collision_func: Callable):
+    def instant_falling(self, collision_func: Callable[[int, int], bool]):
         while 1:
-            if not self.fast_falling(collision_func):
+            if self.collision_prob(collision_func, next_y=1):
+                self.y += 1
+            else:
                 break
 
-    def free_fall(self, collision_func: Callable, fall_speed=0.5):
+    def free_fall(self, collision_func: Callable[[int, int], bool], fall_speed=0.5):
         if time.time() - self.__last_fall > fall_speed:  # свободное падение фигуры
             if not self.collision_prob(collision_func, next_y=1):
                 return False
@@ -94,7 +95,10 @@ class Figure:
                 return True
         return True
 
-    def collision_prob(self, collision_func: Callable, next_x=0, next_y=0):
+    def remove_chip(self, x, y):
+        del self.__figure_type[x][y]
+
+    def collision_prob(self, collision_func: Callable[[int, int], bool], next_x=0, next_y=0):
         for block_x in range(len(self.__figure_type)):
             for block_y in range(len(self.__figure_type[block_x])):
                 if self.__figure_type[block_x][block_y]:
@@ -105,7 +109,7 @@ class Figure:
                         return False
         return True
 
-    def collision_prob_rotate(self, collision_func: Callable, rotated_figure):
+    def collision_prob_rotate(self, collision_func: Callable[[int, int], bool], rotated_figure):
         for block_x in range(len(rotated_figure)):
             for block_y in range(len(rotated_figure[block_x])):
                 if rotated_figure[block_x][block_y]:

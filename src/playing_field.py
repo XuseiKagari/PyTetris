@@ -11,7 +11,7 @@ class PFEvents(Enum):
     MOVE_ACTIVE_RIGHT = auto()
     MOVE_ACTIVE_ROTATE = auto()
     MOVE_ACTIVE_FALL = auto()
-
+    MOVE_ACTIVE_INSTANT_FALL = auto()
 
 class PlayingField:
     def __init__(self, screen: pg.Surface):
@@ -116,8 +116,8 @@ class PlayingField:
                 for item in items:
                     fig_idx, chip_x, chip_y = item
                     self.__storage.fallen_figures()[fig_idx].remove_chip(chip_x, chip_y)
-        for idx, figure in enumerate(self.__storage.fallen_figures()):
-            figure.instant_falling(self.__is_wrapped_func_excluded(idx))
+                for idx, figure in enumerate(self.__storage.fallen_figures()):
+                    figure.fast_falling(self.__is_wrapped_func_excluded(idx))
 
     def tick(self):
         self.__draw_playing_field()
@@ -153,6 +153,9 @@ class PlayingField:
             if evt == PFEvents.MOVE_ACTIVE_ROTATE:
                 falling_figure.rotate(self.__is_collided_func)
                 self.__storage.set_falling(falling_figure)
+            if evt == PFEvents.MOVE_ACTIVE_INSTANT_FALL:
+                falling_figure.instant_falling(self.__is_collided_func)
+                self.__storage.set_falling(falling_figure)
         self.__draw_figures()
 
     def handle_pg_event(self, event: Event):
@@ -165,5 +168,7 @@ class PlayingField:
                 self.__event_bus.put(PFEvents.MOVE_ACTIVE_RIGHT)
             if event.key == pg.K_UP:
                 self.__event_bus.put(PFEvents.MOVE_ACTIVE_ROTATE)
+            if event.key == pg.K_SPACE:
+                self.__event_bus.put(PFEvents.MOVE_ACTIVE_INSTANT_FALL)
 
 
