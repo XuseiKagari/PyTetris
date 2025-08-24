@@ -13,9 +13,12 @@ class PFEvents(Enum):
     MOVE_ACTIVE_FALL = auto()
     MOVE_ACTIVE_INSTANT_FALL = auto()
 
+
 class PlayingField:
     def __init__(self, screen: pg.Surface):
-        self.__fall_speed = 0.5
+        self.__lines = 0
+
+        self.f1 = pg.font.Font(None, 20)
 
         self.__screen = screen
 
@@ -44,13 +47,38 @@ class PlayingField:
             for _x in range(len(fig)):
                 for _y in range(len(fig[_x])):
                     if fig[_x][_y]:
-                        self.draw_block(
+                        self.__draw_block(
                             self.initial_cord_x + self.__cell * (figure.x + _x),
                             self.initial_cord_y + self.__cell * (figure.y + _y),
                             figure.color
                         )
 
+    def __draw_next_figure(self, next_figure):
+        text_next_figure = self.f1.render('Следующая фигура', False, "White")
+        self.__screen.blit(text_next_figure, (
+            self.initial_cord_x + self.__cell * (self.field_w + 2),
+            self.initial_cord_y))
+        pg.draw.rect(self.__screen, "black",(
+            self.initial_cord_x + self.__cell * (self.field_w + 2),
+            self.initial_cord_y + self.__cell,
+            self.__cell * 4, self.__cell * 4))
+        fig = next_figure.get_figure()
+        for _x in range(len(fig)):
+            for _y in range(len(fig[_x])):
+                if fig[_x][_y]:
+                    self.__draw_block(
+                        self.initial_cord_x + self.__cell * (self.field_w + _x + 2),
+                        self.initial_cord_y + self.__cell * (_y + 1),
+                        next_figure.color
+                    )
+
     def __draw_playing_field(self):
+
+        text_level = self.f1.render('Уровень: ' + str(self.__current_level(self.__lines)), False, "White")
+        self.__screen.blit(text_level, (
+            self.initial_cord_x + self.__cell * (self.field_w + 2),
+            self.initial_cord_y + self.__cell * 5))
+
         pg.draw.rect(self.__screen, "grey",
                      (self.initial_cord_x, self.initial_cord_y, self.__cell * self.field_w,
                       self.__cell * self.field_h))
@@ -61,7 +89,7 @@ class PlayingField:
                              (self.initial_cord_x + self.__cell * x, self.initial_cord_y + self.__cell * y,
                               self.__cell, self.__cell), 1)
 
-    def draw_block(self, cord_x, cord_y, color):
+    def __draw_block(self, cord_x, cord_y, color):
         pg.draw.rect(self.__screen, color.value[0], (cord_x + 1, cord_y + 1, self.__cell - 1, self.__cell - 1), 0, 3)
         pg.draw.rect(self.__screen, color.value[1], (cord_x + 1, cord_y + 1, self.__cell - 4, self.__cell - 4), 0, 3)
         pg.draw.circle(self.__screen, color.value[0], (cord_x + self.__cell / 2, cord_y + self.__cell / 2), 5)
@@ -117,28 +145,40 @@ class PlayingField:
         for y in range(self.field_h - 1, -1, -1):
             buffer_state = self.__buffer_field(y)
             if len(buffer_state) == self.field_w:
+                self.__lines += 1
                 for item in set(buffer_state):
                     fig_idx, chip_y = item
                     self.__storage.fallen_figures()[fig_idx].remove_row(chip_y)
                 for idx, figure in enumerate(self.__storage.fallen_figures()):
                     figure.fast_falling(self.__is_wrapped_func_excluded(idx))
 
+    def __fall_speed(self, level) -> int:
+        return pow(0.8 - ((level - 1) * 0.007), level - 1)
+
+    def __current_level(self, lines):
+        return 1 + int(lines/10)
+
     def tick(self):
         self.__draw_playing_field()
 
         if self.__next_figure is None:
             self.__next_figure = Figure(self.__fall_from_x, self.__fall_from_y)
+            self.__draw_next_figure(self.__next_figure)
         falling_figure = self.__storage.get_falling()
         if falling_figure is None:
             self.__storage.set_falling(self.__next_figure)
             self.__next_figure = Figure(self.__fall_from_x, self.__fall_from_y)
+            self.__draw_next_figure(self.__next_figure)
             falling_figure = self.__storage.get_falling()
 
-        if not falling_figure.free_fall(self.__is_collided_func):
+        if not falling_figure.free_fall(self.__is_collided_func, self.__fall_speed(
+                self.__current_level(self.__lines))):
             self.__storage.preempt_falling(self.__next_figure)
             self.__next_figure = Figure(self.__fall_from_x, self.__fall_from_y)
+            self.__draw_next_figure(self.__next_figure)
             falling_figure = self.__storage.get_falling()
-            if not falling_figure.free_fall(self.__is_collided_func):
+            if not falling_figure.free_fall(self.__is_collided_func, self.__fall_speed(
+                    self.__current_level(self.__lines))):
                 self.game_over = True
                 return
         self.__remove_filled()

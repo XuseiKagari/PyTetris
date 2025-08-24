@@ -36,8 +36,8 @@ class Figure:
              [0, 1, 0],
              [1, 1, 0]],
             # квадрат
-            [[1, 1, 0],
-             [1, 1, 0]],
+            [[1, 1],
+             [1, 1]],
             # Z-образная
             [[1, 1, 0],
              [0, 1, 1],
@@ -85,7 +85,7 @@ class Figure:
             else:
                 break
 
-    def free_fall(self, collision_func: Callable[[int, int], bool], fall_speed=0.5):
+    def free_fall(self, collision_func: Callable[[int, int], bool], fall_speed):
         if time.time() - self.__last_fall > fall_speed:  # свободное падение фигуры
             if not self.collision_prob(collision_func, next_y=1):
                 return False
@@ -124,3 +124,4 @@ class Figure:
                     ):
                         return False
         return True
+
