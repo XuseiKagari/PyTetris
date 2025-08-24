@@ -99,7 +99,7 @@ class PlayingField:
 
         return __is_collided_func
 
-    def __remove_filled(self):
+    def __buffer_field(self, y):
         buffer_state = {}
         for fig_idx, figure in enumerate(self.__storage.fallen_figures()):
             fig = figure.get_figure()
@@ -110,12 +110,16 @@ class PlayingField:
                         idx = actual_y
                         if buffer_state.get(idx, None) is None:
                             buffer_state[idx] = []
-                        buffer_state[idx].append((fig_idx, _x, _y))
-        for _, items in buffer_state.items():
-            if len(items) == self.field_w:
-                for item in items:
-                    fig_idx, chip_x, chip_y = item
-                    self.__storage.fallen_figures()[fig_idx].remove_chip(chip_x, chip_y)
+                        buffer_state[idx].append((fig_idx, _y))
+        return buffer_state.get(y, [])
+
+    def __remove_filled(self):
+        for y in range(self.field_h - 1, -1, -1):
+            buffer_state = self.__buffer_field(y)
+            if len(buffer_state) == self.field_w:
+                for item in set(buffer_state):
+                    fig_idx, chip_y = item
+                    self.__storage.fallen_figures()[fig_idx].remove_row(chip_y)
                 for idx, figure in enumerate(self.__storage.fallen_figures()):
                     figure.fast_falling(self.__is_wrapped_func_excluded(idx))
 
