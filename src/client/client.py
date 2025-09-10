@@ -9,4 +9,7 @@ class Client:
         self.sock.connect(addr)
 
         self.players = []
-        Thread(target=self.get_playing_field).start()
+        Thread(target=self.send_new_figure).start()
+
+    def send_new_figure(self):
+

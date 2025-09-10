@@ -173,7 +173,7 @@ class PlayingField:
 
         if not falling_figure.free_fall(self.__is_collided_func, self.__fall_speed(
                 self.__current_level(self.__lines))):
-            self.__storage.preempt_falling(self.__next_figure)
+            self.__storage.set_falling(self.__next_figure)
             self.__next_figure = Figure(self.__fall_from_x, self.__fall_from_y)
             self.__draw_next_figure(self.__next_figure)
             falling_figure = self.__storage.get_falling()
@@ -187,19 +187,15 @@ class PlayingField:
             evt = self.__event_bus.get()
             if evt == PFEvents.MOVE_ACTIVE_FALL:
                 falling_figure.fast_falling(self.__is_collided_func)
-                self.__storage.set_falling(falling_figure)
             if evt == PFEvents.MOVE_ACTIVE_LEFT:
                 falling_figure.left_move(self.__is_collided_func)
-                self.__storage.set_falling(falling_figure)
             if evt == PFEvents.MOVE_ACTIVE_RIGHT:
                 falling_figure.right_move(self.__is_collided_func)
-                self.__storage.set_falling(falling_figure)
             if evt == PFEvents.MOVE_ACTIVE_ROTATE:
                 falling_figure.rotate(self.__is_collided_func)
-                self.__storage.set_falling(falling_figure)
             if evt == PFEvents.MOVE_ACTIVE_INSTANT_FALL:
                 falling_figure.instant_falling(self.__is_collided_func)
-                self.__storage.set_falling(falling_figure)
+
         self.__draw_figures()
 
     def handle_pg_event(self, event: Event):

@@ -12,14 +12,8 @@ class FigureStorage:
         except Exception:
             return None
 
-    def set_falling(self, figure) -> Figure:
-        if len(self.__figures):
-            self.__figures[-1] = figure
-        else:
-            self.__figures.append(figure)
-        return figure
 
-    def preempt_falling(self, figure) -> Figure:
+    def set_falling(self, figure) -> Figure:
         self.__figures.append(figure)
         return figure
 
