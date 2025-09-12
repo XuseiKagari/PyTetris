@@ -1,7 +1,9 @@
 from time import sleep
 import pygame as pg
 from playing_field import PlayingField
+from figure_storage import FigureStorage
 from button import Button
+from client import Client
 
 
 class TetrisGame:
@@ -17,7 +19,10 @@ class TetrisGame:
         self.__fps = 25
         self.__fps_clock.tick(self.__fps)
 
-        self.__pf = PlayingField(self.__screen)
+        self.__fs = FigureStorage()
+
+        self.__pf = PlayingField(self.__screen, self.__fs)
+
 
     def main_menu(self):
         self.__screen.fill((0, 0, 0))
@@ -80,6 +85,20 @@ class TetrisGame:
             self.__pf.tick()
             sleep(0.1)
 
+    def net_play(self):
+        client = Client(('localhost', 8080), self.__fs)
+        self.__screen.fill((0, 0, 0))
+        while True:
+            pg.display.flip()
+            if self.__pf.game_over:
+                return
+
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                self.__pf.handle_pg_event(event)
+            self.__pf.tick()
+            sleep(0.1)
 
 if __name__ == '__main__':
     game = TetrisGame()

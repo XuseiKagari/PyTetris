@@ -3,7 +3,7 @@ from enum import Enum, auto
 import pygame as pg
 from queue import Queue
 from figure import Figure
-from figure_storage import FigureStorage
+
 
 
 class PFEvents(Enum):
@@ -15,7 +15,7 @@ class PFEvents(Enum):
 
 
 class PlayingField:
-    def __init__(self, screen: pg.Surface):
+    def __init__(self, screen: pg.Surface, figure_storage):
         self.__lines = 0
 
         self.f1 = pg.font.Font(None, 20)
@@ -26,7 +26,7 @@ class PlayingField:
         self.field_w = 10
         self.__cell = 20
 
-        self.__storage = FigureStorage()
+        self.__storage = figure_storage
 
         self.__event_bus = Queue()
 

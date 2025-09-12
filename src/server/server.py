@@ -1,6 +1,7 @@
 import socket
 import struct
 from threading import Thread
+from figure import Figure
 
 HOST, PORT = 'localhost', 8080
 MAX_PLAYERS = 2
@@ -10,7 +11,7 @@ class Server:
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.bind(addr)
         self.max_players = max_coon
-        self.players = []
+        self.__figures = []
 
         self.s.listen(self.max_players)
         self.listen()
@@ -34,7 +35,7 @@ class Server:
                 if not data:
                     break
 
-                data = struct.unpack('c', data)
+                x, y, color, type = struct.unpack('ii6s4s', data)
 
 
 
