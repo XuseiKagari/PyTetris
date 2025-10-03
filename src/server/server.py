@@ -3,22 +3,21 @@ import struct
 from threading import Thread
 from figure import Figure
 
-HOST, PORT = 'localhost', 8080
+HOST, PORT = 'localhost', 65432
 MAX_PLAYERS = 2
 
 class Server:
     def __init__(self, addr, max_coon):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.bind(addr)
-        self.max_players = max_coon
         self.__figures = []
 
-        self.s.listen(self.max_players)
+        self.s.listen()
         self.listen()
 
     def listen(self):
         while True:
-            if len(self.players) < self.max_players:
+            if 1 < 2:
                 conn, addr = self.s.accept()
 
                 print("New connection", addr)
@@ -35,15 +34,13 @@ class Server:
                 if not data:
                     break
 
-                x, y, color, type = struct.unpack('ii6s4s', data)
-
-
+                x, y, color, fig_type = struct.unpack('bbbb', data)
+                print("x:%(x)s, y:%(y)s, color:%(color)s, type:%(type)s" % {"x": x, "y": y, "color": color, "type": fig_type})
+                conn.sendall(data)
 
             except Exception as e:
                 print(e)
                 break
-
-        self.players.remove(self.player)
 
 
 if __name__ == "__main__":

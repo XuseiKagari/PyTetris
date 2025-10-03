@@ -15,7 +15,7 @@ class PFEvents(Enum):
 
 
 class PlayingField:
-    def __init__(self, screen: pg.Surface, figure_storage):
+    def __init__(self, screen: pg.Surface, figure_storage, initial_cord_x=None, initial_cord_y=None):
         self.__lines = 0
 
         self.f1 = pg.font.Font(None, 20)
@@ -31,8 +31,15 @@ class PlayingField:
         self.__event_bus = Queue()
 
         screen_x, screen_y = screen.get_size()
-        self.initial_cord_x = int((screen_x - self.__cell * self.field_w) / 2)
-        self.initial_cord_y = int((screen_y - self.__cell * self.field_h) / 2)
+        if initial_cord_x is None:
+            self.initial_cord_x = int((screen_x - self.__cell * self.field_w) / 2)
+        else:
+            self.initial_cord_x = initial_cord_x
+
+        if initial_cord_y is None:
+            self.initial_cord_y = int((screen_y - self.__cell * self.field_h) / 2)
+        else:
+            self.initial_cord_y = initial_cord_y
 
         self.__fall_from_x = int(self.field_w / 2) - 1
         self.__fall_from_y = 0
@@ -90,9 +97,9 @@ class PlayingField:
                               self.__cell, self.__cell), 1)
 
     def __draw_block(self, cord_x, cord_y, color):
-        pg.draw.rect(self.__screen, color.value[0], (cord_x + 1, cord_y + 1, self.__cell - 1, self.__cell - 1), 0, 3)
-        pg.draw.rect(self.__screen, color.value[1], (cord_x + 1, cord_y + 1, self.__cell - 4, self.__cell - 4), 0, 3)
-        pg.draw.circle(self.__screen, color.value[0], (cord_x + self.__cell / 2, cord_y + self.__cell / 2), 5)
+        pg.draw.rect(self.__screen, color.value[1], (cord_x + 1, cord_y + 1, self.__cell - 1, self.__cell - 1), 0, 3)
+        pg.draw.rect(self.__screen, color.value[2], (cord_x + 1, cord_y + 1, self.__cell - 4, self.__cell - 4), 0, 3)
+        pg.draw.circle(self.__screen, color.value[1], (cord_x + self.__cell / 2, cord_y + self.__cell / 2), 5)
 
     def __is_collided_func(self, x, y) -> bool:
         if x < 0 or x >= self.field_w:

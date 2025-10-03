@@ -11,7 +11,7 @@ class TetrisGame:
         pg.init()
         pg.display.set_caption("Tetris")
 
-        self.__screen_x = 600
+        self.__screen_x = 1200
         self.__screen_y = 500
         self.__screen = pg.display.set_mode((self.__screen_x, self.__screen_y))
 
@@ -21,18 +21,16 @@ class TetrisGame:
 
         self.__fs = FigureStorage()
 
-        self.__pf = PlayingField(self.__screen, self.__fs)
-
 
     def main_menu(self):
         self.__screen.fill((0, 0, 0))
-        play_button = Button(250, 50, 100, 40, (255, 140, 0), 'Новая игра',
+        play_button = Button(550, 50, 100, 40, (255, 140, 0), 'Новая игра',
                              hover_color=(255, 100, 0), sound_path='../sound/button_click.mp3')
-        net_play_button = Button(250, 100, 100, 40, (255, 140, 0), 'Сетевая игра',
+        net_play_button = Button(550, 100, 100, 40, (255, 140, 0), 'Сетевая игра',
                                  hover_color=(255, 100, 0), sound_path='../sound/button_click.mp3')
-        settings_button = Button(250, 150, 100, 40, (255, 140, 0), 'Настройки',
+        settings_button = Button(550, 150, 100, 40, (255, 140, 0), 'Настройки',
                                  hover_color=(255, 100, 0), sound_path='../sound/button_click.mp3')
-        exit_button = Button(250, 200, 100, 40, (255, 140, 0), 'Выход',
+        exit_button = Button(550, 200, 100, 40, (255, 140, 0), 'Выход',
                              hover_color=(255, 100, 0), sound_path='../sound/button_click.mp3')
         while True:
             pg.display.flip()
@@ -58,7 +56,7 @@ class TetrisGame:
 
     def settings_menu(self):
         self.__screen.fill((0, 0, 0))
-        back_button = Button(250, 100, 100, 40, (255, 140, 0), 'Назад',
+        back_button = Button(550, 100, 100, 40, (255, 140, 0), 'Назад',
                              hover_color=(255, 100, 0), sound_path='../sound/button_click.mp3')
         while True:
             pg.display.flip()
@@ -73,31 +71,34 @@ class TetrisGame:
 
     def play(self):
         self.__screen.fill((0, 0, 0))
+        __pf = PlayingField(self.__screen, self.__fs)
         while True:
             pg.display.flip()
-            if self.__pf.game_over:
+            if __pf.game_over:
                 return
 
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     pg.quit()
-                self.__pf.handle_pg_event(event)
-            self.__pf.tick()
+                __pf.handle_pg_event(event)
+            __pf.tick()
             sleep(0.1)
 
     def net_play(self):
-        client = Client(('localhost', 8080), self.__fs)
         self.__screen.fill((0, 0, 0))
+        __client = Client(('localhost', 65432), self.__fs)
+        __pf = PlayingField(self.__screen, self.__fs, 20)
         while True:
             pg.display.flip()
-            if self.__pf.game_over:
+            if __pf.game_over:
                 return
 
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     pg.quit()
-                self.__pf.handle_pg_event(event)
-            self.__pf.tick()
+                __pf.handle_pg_event(event)
+            __pf.tick()
+            __client.send_new_figure()
             sleep(0.1)
 
 if __name__ == '__main__':

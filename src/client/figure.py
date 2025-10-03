@@ -5,10 +5,10 @@ from numpy import rot90, array, flip
 
 
 class Color(Enum):
-        BLUE = ((0, 0, 225), (30, 30, 255))
-        GREEN = ((0, 225, 0), (50, 255, 50))
-        RED = ((225, 0, 0), (255, 30, 30))
-        YELLOW = ((225, 225, 0), (255, 255, 30))
+        BLUE = (1, (0, 0, 225), (30, 30, 255))
+        GREEN = (2, (0, 225, 0), (50, 255, 50))
+        RED = (3, (225, 0, 0), (255, 30, 30))
+        YELLOW = (4, (225, 225, 0), (255, 255, 30))
 
 
 class Figure:
@@ -16,11 +16,12 @@ class Figure:
         self.x = int(x)
         self.y = int(y)
         self.color = random.choice([*Color])
-        self.__figure_type = self.random_figure()
+        self.figure_number_type = random.randint(0, 6)
+        self.__figure_type = self.random_figure(self.figure_number_type)
         self.__last_fall = time.time()
 
     @staticmethod
-    def random_figure():
+    def random_figure(__figure_number_type):
         figures_cord = [
             # линия
             [[0, 0, 0, 0],
@@ -51,9 +52,7 @@ class Figure:
              [1, 1, 1],
              [0, 0, 0]],
         ]
-        figure = random.choice(figures_cord)
-        rotated_figure = flip(rot90(figure, 1), 0)
-        return rotated_figure.tolist()
+        return figures_cord[__figure_number_type]
 
     def get_figure(self):
         return self.__figure_type
