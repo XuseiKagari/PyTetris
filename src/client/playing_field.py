@@ -1,6 +1,6 @@
 from pygame.event import Event
 from enum import Enum, auto
-import pygame as pg
+import time, pygame as pg
 from queue import Queue
 from figure import Figure
 
@@ -178,16 +178,16 @@ class PlayingField:
             self.__draw_next_figure(self.__next_figure)
             falling_figure = self.__storage.get_falling()
 
-        if not falling_figure.free_fall(self.__is_collided_func, self.__fall_speed(
-                self.__current_level(self.__lines))):
-            self.__storage.set_falling(self.__next_figure)
-            self.__next_figure = Figure(self.__fall_from_x, self.__fall_from_y)
-            self.__draw_next_figure(self.__next_figure)
-            falling_figure = self.__storage.get_falling()
-            if not falling_figure.free_fall(self.__is_collided_func, self.__fall_speed(
-                    self.__current_level(self.__lines))):
-                self.game_over = True
-                return
+        if time.time() - falling_figure.last_fall > self.__fall_speed(self.__current_level(self.__lines)):
+            if not falling_figure.free_fall(self.__is_collided_func):
+                self.__storage.set_falling(self.__next_figure)
+                self.__next_figure = Figure(self.__fall_from_x, self.__fall_from_y)
+                self.__draw_next_figure(self.__next_figure)
+                falling_figure = self.__storage.get_falling()
+                if not falling_figure.free_fall(self.__is_collided_func):
+                    self.game_over = True
+                    return
+
         self.__remove_filled()
 
         while not self.__event_bus.empty():
@@ -202,6 +202,53 @@ class PlayingField:
                 falling_figure.rotate(self.__is_collided_func)
             if evt == PFEvents.MOVE_ACTIVE_INSTANT_FALL:
                 falling_figure.instant_falling(self.__is_collided_func)
+
+        self.__draw_figures()
+
+    def net_tick(self, client):
+        self.__draw_playing_field()
+
+        if self.__next_figure is None:
+            self.__next_figure = Figure(self.__fall_from_x, self.__fall_from_y)
+            self.__draw_next_figure(self.__next_figure)
+        falling_figure = self.__storage.get_falling()
+        if falling_figure is None:
+            self.__storage.set_falling(self.__next_figure)
+            self.__next_figure = Figure(self.__fall_from_x, self.__fall_from_y)
+            self.__draw_next_figure(self.__next_figure)
+            falling_figure = self.__storage.get_falling()
+            client.send_new_figure()
+        if time.time() - falling_figure.last_fall > self.__fall_speed(self.__current_level(self.__lines)):
+            client.move_figure()
+            if not falling_figure.free_fall(self.__is_collided_func):
+                self.__storage.set_falling(self.__next_figure)
+                self.__next_figure = Figure(self.__fall_from_x, self.__fall_from_y)
+                self.__draw_next_figure(self.__next_figure)
+                falling_figure = self.__storage.get_falling()
+                client.send_new_figure()
+                if not falling_figure.free_fall(self.__is_collided_func):
+                    self.game_over = True
+                    return
+
+        self.__remove_filled()
+
+        while not self.__event_bus.empty():
+            evt = self.__event_bus.get()
+            if evt == PFEvents.MOVE_ACTIVE_FALL:
+                falling_figure.fast_falling(self.__is_collided_func)
+                client.move_figure()
+            if evt == PFEvents.MOVE_ACTIVE_LEFT:
+                falling_figure.left_move(self.__is_collided_func)
+                client.move_figure()
+            if evt == PFEvents.MOVE_ACTIVE_RIGHT:
+                falling_figure.right_move(self.__is_collided_func)
+                client.move_figure()
+            if evt == PFEvents.MOVE_ACTIVE_ROTATE:
+                falling_figure.rotate(self.__is_collided_func)
+                client.rotate_figure()
+            if evt == PFEvents.MOVE_ACTIVE_INSTANT_FALL:
+                falling_figure.instant_falling(self.__is_collided_func)
+                client.move_figure()
 
         self.__draw_figures()
 

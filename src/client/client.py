@@ -12,7 +12,24 @@ class Client:
 
     def send_new_figure(self):
         figure = self.__fs.get_falling()
-        self.sock.sendall(struct.pack('bbbb', figure.x, figure.y,  figure.color.value[0],  figure.figure_number_type))
+        self.sock.sendall(struct.pack('cbbbbb', b'N', figure.id, figure.x, figure.y,  figure.color.value[0],  figure.figure_number_type))
+
+    def del_figure(self):
+        figure = self.__fs.get_falling()
+        self.sock.sendall(struct.pack('cb', b'D', figure.id))
+
+    def move_figure(self):
+        figure = self.__fs.get_falling()
+        self.sock.sendall(struct.pack('cbbb', b'M', figure.id, figure.x, figure.y))
+
+    def rotate_figure(self):
+        figure = self.__fs.get_falling()
+        self.sock.sendall(struct.pack('cb', b'R', figure.id))
+
+    # N- новая фигура id x y color type
+    # D- удалить фигуру id
+    # M- переместить фигуру id x y
+    # R- повернуть фигуру id
 
     def get_new_figure(self):
         while True:

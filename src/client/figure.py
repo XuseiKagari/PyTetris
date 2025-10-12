@@ -1,5 +1,6 @@
 import random, time
 from enum import Enum
+from itertools import count
 from typing import Callable
 from numpy import rot90, array, flip
 
@@ -12,13 +13,16 @@ class Color(Enum):
 
 
 class Figure:
+    _ids = count(1)
+
     def __init__(self, x, y):
+        self.id = next(Figure._ids)
         self.x = int(x)
         self.y = int(y)
         self.color = random.choice([*Color])
         self.figure_number_type = random.randint(0, 6)
         self.__figure_type = self.random_figure(self.figure_number_type)
-        self.__last_fall = time.time()
+        self.last_fall = time.time()
 
     @staticmethod
     def random_figure(__figure_number_type):
@@ -84,15 +88,13 @@ class Figure:
             else:
                 break
 
-    def free_fall(self, collision_func: Callable[[int, int], bool], fall_speed):
-        if time.time() - self.__last_fall > fall_speed:  # свободное падение фигуры
-            if not self.collision_prob(collision_func, next_y=1):
-                return False
-            else:  # фигура пока не приземлилась, продолжаем движение вниз
-                self.y += 1
-                self.__last_fall = time.time()
-                return True
-        return True
+    def free_fall(self, collision_func: Callable[[int, int], bool]):
+        if not self.collision_prob(collision_func, next_y=1):
+            return False
+        else:  # фигура пока не приземлилась, продолжаем движение вниз
+            self.y += 1
+            self.last_fall = time.time()
+            return True
 
     def remove_chip(self, x, y):
         del self.__figure_type[x][y]

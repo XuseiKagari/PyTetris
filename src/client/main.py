@@ -21,7 +21,6 @@ class TetrisGame:
 
         self.__fs = FigureStorage()
 
-
     def main_menu(self):
         self.__screen.fill((0, 0, 0))
         play_button = Button(550, 50, 100, 40, (255, 140, 0), 'Новая игра',
@@ -52,7 +51,6 @@ class TetrisGame:
 
                 if event.type == pg.USEREVENT and event.button == settings_button:
                     self.settings_menu()
-
 
     def settings_menu(self):
         self.__screen.fill((0, 0, 0))
@@ -92,13 +90,11 @@ class TetrisGame:
             pg.display.flip()
             if __pf.game_over:
                 return
-
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     pg.quit()
                 __pf.handle_pg_event(event)
-            __pf.tick()
-            __client.send_new_figure()
+            __pf.net_tick(__client)
             sleep(0.1)
 
 if __name__ == '__main__':
