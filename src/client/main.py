@@ -20,6 +20,7 @@ class TetrisGame:
         self.__fps_clock.tick(self.__fps)
 
         self.__fs = FigureStorage()
+        self.__fs_net = FigureStorage()
 
     def main_menu(self):
         self.__screen.fill((0, 0, 0))
@@ -86,6 +87,7 @@ class TetrisGame:
         self.__screen.fill((0, 0, 0))
         __client = Client(('localhost', 65432), self.__fs)
         __pf = PlayingField(self.__screen, self.__fs, 20)
+        __pf_net = PlayingField(self.__screen, self.__fs_net, 120)
         while True:
             pg.display.flip()
             if __pf.game_over:

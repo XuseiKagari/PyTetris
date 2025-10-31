@@ -6,6 +6,19 @@ from figure_storage_s import FigureStorageServer
 
 HOST, PORT = 'localhost', 65432
 MAX_PLAYERS = 2
+FULL_FIGURE_DESC = 'bbbbb'
+FIGURE_ROTATE = 'b'
+FIGURE_MOVE = 'bbb'
+FIGURE_DEL = 'b'
+
+def recv_all(conn, length: int) -> bytes:
+    data = b''
+    while len(data) < length:
+        packet = conn.recv(length - len(data))
+        if not packet:
+            return None
+        data += packet
+    return data
 
 
 class Server:
@@ -14,6 +27,7 @@ class Server:
         self.s.bind(addr)
         self.s.listen()
         self.listen()
+
     def listen(self):
         while True:
             if 1 < 2:
@@ -25,39 +39,37 @@ class Server:
                        args=(conn,)).start()
 
     def handle_client(self, conn):
-        fs = FigureStorageServer
+        fs = FigureStorageServer()
         while True:
             try:
-                com = conn.recv(1)
+                com = recv_all(conn, 1)
 
                 if not com:
                     break
                 com = struct.unpack('c', com)[0]
 
                 if com == b'N':
-                    data = conn.recv(5)
-                    ids, x, y, color, fig_type = struct.unpack('bbbbb', data)
+                    data = recv_all(conn, 5)
+                    ids, x, y, color, fig_type = struct.unpack(FULL_FIGURE_DESC, data)
                     fig = FigureServer(ids, x, y, color, fig_type)
                     fs.set_falling(fig)
-                    print("id%(id)s, x:%(x)s, y:%(y)s, color:%(color)s, type:%(type)s" % {"id": ids, "x": x, "y": y,
-                                                                                          "color": color,
-                                                                                          "type": fig_type})
+                    print(f"{ids=}, {x=}, {y}, {color=}, {fig_type=}")
 
                 if com == b'D':
-                    data = conn.recv(1)
-                    ids = struct.unpack('b', data)
+                    data = recv_all(conn, 1)
+                    ids = struct.unpack(FIGURE_DEL, data)
                     fs.del_figure(ids)
-                    print("id%(id)s" % {"id": ids})
+                    print(f"{ids=}")
 
                 if com == b'M':
-                    data = conn.recv(3)
-                    ids, x, y = struct.unpack('bbb', data)
-                    print("id%(id)s, x:%(x)s, y:%(y)s" % {"id": ids, "x": x, "y": y})
+                    data = recv_all(conn, 3)
+                    ids, x, y = struct.unpack(FIGURE_MOVE, data)
+                    print(f"{ids=}, {x=}, {y=}")
 
                 if com == b'R':
-                    data = conn.recv(1)
-                    ids = struct.unpack('b', data)
-                    print("id%(id)s" % {"id": ids})
+                    data = recv_all(conn, 1)
+                    ids = struct.unpack(FIGURE_ROTATE, data)
+                    print(f"{ids=}")
 
             except Exception as e:
                 print(e)
