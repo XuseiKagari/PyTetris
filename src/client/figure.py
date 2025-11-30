@@ -103,7 +103,6 @@ class Figure:
         for x in range(len(self.__figure_type)):
             del self.__figure_type[x][y]
 
-
     def collision_prob(self, collision_func: Callable[[int, int], bool], next_x=0, next_y=0):
         for block_x in range(len(self.__figure_type)):
             for block_y in range(len(self.__figure_type[block_x])):

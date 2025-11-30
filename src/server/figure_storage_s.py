@@ -13,7 +13,7 @@ class FigureStorageServer:
             return None
 
     def set_falling(self, figure) -> FigureServer:
-        self.__figures[figure.id] = figure
+        self.__figures[figure.ids] = figure
         return figure
 
     def __iter__(self) -> Iterator[FigureServer]:
